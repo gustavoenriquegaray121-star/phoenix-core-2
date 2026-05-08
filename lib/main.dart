@@ -343,7 +343,7 @@ class PC2GameWrapper extends StatelessWidget {
 // FLAME GAME PRINCIPAL
 // ══════════════════════════════════════════════════════════
 class PhoenixCore2Game extends FlameGame
-    with HasCollisionDetection, TapDetector { // <-- CORREGIDO: TapDetector reemplaza a TapCallbacks
+    with HasCollisionDetection, TapDetector { 
 
   final CaptainData captain;
   PhoenixCore2Game({required this.captain});
@@ -449,7 +449,7 @@ class VHDLSky extends Component with HasGameRef<PhoenixCore2Game> {
     'JERK_LIMIT := 512;',
     'dead_cnt <= DEAD_TIME_CYC;',
     'ST_SUPPRESSING => NULL;',
-    'CORRUPT_SECTOR_0x4F;',    // Líneas corruptas del Doppelganger
+    'CORRUPT_SECTOR_0x4F;',    
     'OVERRIDE_PROTOCOL_9;',
     'MEMORY_VIOLATION_0xFF;',
     'ENTROPY_CASCADE > MAX;',
@@ -457,18 +457,15 @@ class VHDLSky extends Component with HasGameRef<PhoenixCore2Game> {
 
   @override
   void update(double dt) {
-    // Spawner de líneas VHDL
     _spawnTimer -= dt;
     if (_spawnTimer <= 0) {
       _spawnTimer = 0.3 + _rng.nextDouble() * 0.8;
       _spawnLine();
     }
 
-    // Actualizar líneas
     for (final line in _lines) line.update(dt);
     _lines.removeWhere((l) => l.isDead);
 
-    // Glitch del Doppelganger
     _glitchTimer -= dt;
     if (_glitchTimer <= 0) {
       _glitchActive = !_glitchActive;
@@ -489,17 +486,13 @@ class VHDLSky extends Component with HasGameRef<PhoenixCore2Game> {
 
   @override
   void render(Canvas canvas) {
-    // Fondo base
     final bgPaint = Paint()..color = const Color(0xFF04080F);
     canvas.drawRect(Rect.fromLTWH(0, 0, gameRef.size.x, gameRef.size.y), bgPaint);
 
-    // Líneas VHDL
     for (final line in _lines) line.render(canvas);
 
-    // Overlay de glitch del Doppelganger
     if (_glitchActive) {
-      final glitchPaint = Paint()
-        ..color = const Color(0x11FF0044);
+      final glitchPaint = Paint()..color = const Color(0x11FF0044);
       canvas.drawRect(Rect.fromLTWH(0, 0, gameRef.size.x, gameRef.size.y), glitchPaint);
     }
   }
@@ -520,7 +513,6 @@ class _VHDLLine {
   void update(double dt) {
     y += speed * dt;
     if (y > screenHeight + 20) isDead = true;
-    // Fade out al fondo
     if (y > screenHeight * 0.7) {
       opacity = ((screenHeight - y) / (screenHeight * 0.3)).clamp(0, 1);
     }
@@ -551,33 +543,19 @@ class PC2HUD extends StatelessWidget {
   @override Widget build(BuildContext ctx) {
     final cap = game.captain;
     return SafeArea(child: Stack(children: [
-
-      // Hull bar — arriba izquierda
       Positioned(top: 16, left: 16, child: _HullBar(game: game)),
-
-      // Ability charge — arriba derecha
       Positioned(top: 16, right: 16, child: _AbilityIndicator(game: game)),
-
-      // Mundo actual — centro arriba
       Positioned(top: 16, left: 0, right: 0, child: Center(
         child: Text(game.currentWorld, style: TextStyle(
           color: cap.color.withOpacity(0.6), fontSize: 10,
           fontFamily: 'monospace', letterSpacing: 2)),
       )),
-
-      // Score — abajo izquierda
       Positioned(bottom: 30, left: 16, child: Text(
         'SCORE ${game.score}',
         style: const TextStyle(color: Colors.white54, fontSize: 12,
           fontFamily: 'monospace'))),
-
-      // Botón habilidad — abajo derecha
       Positioned(bottom: 20, right: 16, child: _AbilityButton(game: game)),
-
-      // Mira central
       Center(child: _Crosshair(color: cap.color)),
-
-      // Warning hull crítico
       if (game.hullIntegrity < 0.15)
         Center(child: Padding(
           padding: const EdgeInsets.only(top: 200),
