@@ -1,0 +1,72 @@
+name: Build Phoenix Core 2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Fix launcher icons
+        run: |
+          python3 << 'EOF'
+          import struct, zlib, os
+
+          def make_png(w, h):
+              sig = b'\x89PNG\r\n\x1a\n'
+              ihdr = struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0)
+              rows = b''.join(b'\x00' + bytes([8, 12, 30] * w) for _ in range(h))
+              idat = zlib.compress(rows)
+              def chunk(t, d):
+                  crc = zlib.crc32(t + d) & 0xffffffff
+                  return struct.pack('>I', len(d)) + t + d + struct.pack('>I', crc)
+              return sig + chunk(b'IHDR', ihdr) + chunk(b'IDAT', idat) + chunk(b'IEND', b'')
+
+          sizes = {
+              'mipmap-mdpi': 48, 'mipmap-hdpi': 72,
+              'mipmap-xhdpi': 96, 'mipmap-xxhdpi': 144, 'mipmap-xxxhdpi': 192
+          }
+          for folder, size in sizes.items():
+              path = f'android/app/src/main/res/{folder}'
+              os.makedirs(path, exist_ok=True)
+              png = make_png(size, size)
+              for name in ['ic_launcher.png', 'ic_launcher_round.png']:
+                  with open(f'{path}/{name}', 'wb') as f:
+                      f.write(png)
+              print(f'Created {path}/ic_launcher.png ({size}x{size})')
+          EOF
+
+      - name: Create placeholder assets
+        run: |
+          mkdir -p assets/images
+          mkdir -p assets/audio
+          mkdir -p assets/fonts
+          touch assets/images/.keep
+          touch assets/audio/.keep
+          touch assets/fonts/.keep
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phoenix-core-2-release
+          path: build/app/outputs/flutter-apk/app-release.apk
