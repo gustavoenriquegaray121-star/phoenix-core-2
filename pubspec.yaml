@@ -1,0 +1,34 @@
+name: phoenix_core_2
+description: Phoenix Core II - FPS game with Flame Engine. ALTEA-GARAY universe.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^1.18.0
+  flame_audio: ^2.1.1
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/audio/
+    - assets/fonts/
+
+  fonts:
+    - family: Orbitron
+      fonts:
+        - asset: assets/fonts/Orbitron-Regular.ttf
+        - asset: assets/fonts/Orbitron-Bold.ttf
+          weight: 700
