@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/collisions.dart';
+import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -342,7 +343,7 @@ class PC2GameWrapper extends StatelessWidget {
 // FLAME GAME PRINCIPAL
 // ══════════════════════════════════════════════════════════
 class PhoenixCore2Game extends FlameGame
-    with HasCollisionDetection, TapCallbacks {
+    with HasCollisionDetection, TapDetector { // <-- CORREGIDO: TapDetector reemplaza a TapCallbacks
 
   final CaptainData captain;
   PhoenixCore2Game({required this.captain});
