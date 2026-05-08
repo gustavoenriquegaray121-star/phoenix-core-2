@@ -19,7 +19,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.22.2'
           channel: 'stable'
 
       - name: Install dependencies
@@ -35,23 +35,38 @@ jobs:
               ihdr = struct.pack('>IIBBBBB', w, h, 8, 2, 0, 0, 0)
               rows = b''.join(b'\x00' + bytes([8, 12, 30] * w) for _ in range(h))
               idat = zlib.compress(rows)
+
               def chunk(t, d):
                   crc = zlib.crc32(t + d) & 0xffffffff
                   return struct.pack('>I', len(d)) + t + d + struct.pack('>I', crc)
-              return sig + chunk(b'IHDR', ihdr) + chunk(b'IDAT', idat) + chunk(b'IEND', b'')
+
+              return (
+                  sig +
+                  chunk(b'IHDR', ihdr) +
+                  chunk(b'IDAT', idat) +
+                  chunk(b'IEND', b'')
+              )
 
           sizes = {
-              'mipmap-mdpi': 48, 'mipmap-hdpi': 72,
-              'mipmap-xhdpi': 96, 'mipmap-xxhdpi': 144, 'mipmap-xxxhdpi': 192
+              'mipmap-mdpi': 48,
+              'mipmap-hdpi': 72,
+              'mipmap-xhdpi': 96,
+              'mipmap-xxhdpi': 144,
+              'mipmap-xxxhdpi': 192
           }
+
           for folder, size in sizes.items():
               path = f'android/app/src/main/res/{folder}'
               os.makedirs(path, exist_ok=True)
+
               png = make_png(size, size)
+
               for name in ['ic_launcher.png', 'ic_launcher_round.png']:
                   with open(f'{path}/{name}', 'wb') as f:
                       f.write(png)
+
               print(f'Created {path}/ic_launcher.png ({size}x{size})')
+
           EOF
 
       - name: Create placeholder assets
@@ -59,6 +74,7 @@ jobs:
           mkdir -p assets/images
           mkdir -p assets/audio
           mkdir -p assets/fonts
+
           touch assets/images/.keep
           touch assets/audio/.keep
           touch assets/fonts/.keep
