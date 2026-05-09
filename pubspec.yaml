@@ -1,5 +1,5 @@
 name: phoenix_core_2
-description: Phoenix Core II - FPS game with Flame Engine. ALTEA-GARAY universe.
+description: Phoenix Core II - ALTEA-GARAY universe.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,8 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flame: ^1.18.0
-  flame_audio: ^2.1.1
   shared_preferences: ^2.2.2
 
 dev_dependencies:
@@ -20,7 +18,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
   assets:
     - assets/images/
     - assets/audio/
