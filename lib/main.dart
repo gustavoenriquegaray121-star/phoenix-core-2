@@ -1,8 +1,7 @@
 import 'package:flame/game.dart';
+import 'package:flame/events.dart';
+import 'package:flutter/services.dart';
 import 'package:flame/components.dart';
-import 'package:flame/input.dart';
-import 'package:flame/effects.dart';
-import 'package:flame/collisions.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:ui';
@@ -13,7 +12,8 @@ import 'dart:ui';
 // Gustavo Enrique Garay — ALTEA-GARAY
 // ══════════════════════════════════════════════════════════
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const PC2App());
 }
 
@@ -342,7 +342,7 @@ class PC2GameWrapper extends StatelessWidget {
 // FLAME GAME PRINCIPAL
 // ══════════════════════════════════════════════════════════
 class PhoenixCore2Game extends FlameGame
-    with HasCollisionDetection, TapDetector {
+    with HasCollisionDetection {
 
   final CaptainData captain;
   PhoenixCore2Game({required this.captain});
