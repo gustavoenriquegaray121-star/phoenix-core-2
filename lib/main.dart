@@ -167,8 +167,7 @@ class _CaptainSelectState extends State<CaptainSelectScreen>
                     children: [
                     Text(cap.name, style: TextStyle(color: cap.color, fontSize: 22,
                       fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-                    Text(cap.fullName, style: const TextStyle(
-                      color: Colors.white54, fontSize: 11)),
+
                     Text(cap.title, style: TextStyle(
                       color: cap.color.withOpacity(0.7), fontSize: 12,
                       fontStyle: FontStyle.italic)),
@@ -294,10 +293,10 @@ class _PC2GameScreenState extends State<PC2GameScreen>
     }
     _spawnTimer -= dt;
     if (_spawnTimer <= 0) {
-      _spawnTimer = 0.2 + _rng.nextDouble() * 0.6;
+      _spawnTimer = 0.1 + _rng.nextDouble() * 0.3;
       _lines.add(_VHDLLineData(
         text: _frags[_rng.nextInt(_frags.length)],
-        x: _rng.nextDouble(), speed: 0.035 + _rng.nextDouble() * 0.07,
+        x: _rng.nextDouble(), speed: 0.06 + _rng.nextDouble() * 0.12,
         isCorrupt: _rng.nextDouble() < 0.2));
     }
     for (final l in _lines) l.y += dt * l.speed;
@@ -446,8 +445,8 @@ class _SkyPainter extends CustomPainter {
     for (final l in lines) {
       final op = l.y > 0.75 ? ((1-l.y)/0.25).clamp(0.0,1.0) : 1.0;
       final color = l.isCorrupt
-        ? Color.fromARGB((op*150).toInt(),255,30,60)
-        : Color.fromARGB((op*90).toInt(),0,200,100);
+        ? Color.fromARGB((op*200).toInt(),255,30,60)
+        : Color.fromARGB((op*160).toInt(),0,220,100);
       final pb = ui.ParagraphBuilder(ui.ParagraphStyle(
         textDirection: ui.TextDirection.ltr))
         ..pushStyle(ui.TextStyle(color:color, fontSize:8, fontFamily:'monospace'))
