@@ -1,12 +1,35 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'dart:ui' as ui;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(const PC2App());
+  
+  // Capturar errores en runtime y mostrarlos en pantalla
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+  };
+  
+  runZonedGuarded(() async {
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    runApp(const PC2App());
+  }, (error, stack) {
+    runApp(MaterialApp(
+      home: Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text(
+            'ERROR:\n\n$error\n\n$stack',
+            style: TextStyle(color: Colors.red, fontSize: 10,
+              fontFamily: 'monospace'),
+          ),
+        )),
+      ),
+    ));
+  });
 }
 
 class PC2App extends StatelessWidget {
