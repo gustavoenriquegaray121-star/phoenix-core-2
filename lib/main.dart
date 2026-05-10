@@ -9,10 +9,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
+        backgroundColor: Colors.black,
         body: Center(
-          child: Text('PhoenixCore2 TEST'),
+          child: Text(
+            'PHOENIX CORE 2',
+            style: TextStyle(
+              color: Colors.orange,
+              fontSize: 28,
+            ),
+          ),
         ),
       ),
     );
