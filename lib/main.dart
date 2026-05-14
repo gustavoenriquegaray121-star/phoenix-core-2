@@ -559,11 +559,9 @@ class _BossComp extends SpriteComponent with TapCallbacks {
   Future<void> onLoad() async {
     sprite = await Sprite.load('enemy_boss_s1.png');
     // Glow rojo
-    add(ColorEffect(
-      const Color(0xFFFF2244),
+    add(OpacityEffect.to(0.7,
       EffectController(duration: 1.0, reverseDuration: 1.0,
-        infinite: true, alternate: true),
-      opacities: const [0.0, 0.3]));
+        infinite: true, alternate: true)));
   }
 
   @override
@@ -668,13 +666,13 @@ class _ExplosionComp extends CircleComponent {
 // ═══════════════════════════════════════════════════════════════════════════
 //  FLASH DAÑO
 // ═══════════════════════════════════════════════════════════════════════════
-class _DamageFlash extends RectangleComponent {
+class _DamageFlash extends RectangleComponent with HasGameRef<PC2Game> {
   _DamageFlash() : super(priority: 200,
     paint: Paint()..color = const Color(0x66FF2244));
 
   @override
   Future<void> onLoad() async {
-    size = game!.size;
+    size = gameRef.size;
     add(OpacityEffect.to(0,
       EffectController(duration: 0.35)));
     Future.delayed(const Duration(milliseconds: 380), () {
