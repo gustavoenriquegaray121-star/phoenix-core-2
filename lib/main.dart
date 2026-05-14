@@ -1,40 +1,73 @@
+import 'package:flame/camera.dart';
+import 'package:flame/components.dart';
+import 'package:flame/events.dart';
+import 'package:flame/game.dart';
+import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui' as ui;
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  MAIN
+// ═══════════════════════════════════════════════════════════════════════════
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  FlutterError.onError = (d) => FlutterError.presentError(d);
-  runZonedGuarded(() async {
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    runApp(const PC2App());
-  }, (e, s) {
-    runApp(MaterialApp(home: Scaffold(backgroundColor: Colors.black,
-      body: Center(child: Text('ERROR:\n$e',
-        style: const TextStyle(color: Colors.red, fontSize: 10,
-          fontFamily: 'monospace'))))));
-  });
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  runApp(const PC2App());
 }
 
 class PC2App extends StatelessWidget {
   const PC2App({super.key});
   @override Widget build(BuildContext ctx) => MaterialApp(
-    title: 'Phoenix Core 2', debugShowCheckedModeBanner: false,
-    theme: ThemeData.dark(), home: const SplashScreen());
+    title: 'Phoenix Core 2',
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData.dark(),
+    home: const SplashScreen());
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  COLORES
+//  COLORES Y DATOS
 // ═══════════════════════════════════════════════════════════════════════════
 const cIce    = Color(0xFF00DDFF);
-const cFire   = Color(0xFFFF5500);
 const cGold   = Color(0xFFFFD700);
 const cRed    = Color(0xFFFF2244);
+const cFire   = Color(0xFFFF5500);
 const cPurple = Color(0xFF9944FF);
 const cBg     = Color(0xFF080C18);
 const cPanel  = Color(0xFF0D1420);
+
+enum CaptainId { danny, andy, denise }
+
+class CaptainData {
+  final CaptainId id;
+  final String name, title, ability, abilityDesc, tradeoff, emoji, imagePath;
+  final Color color;
+  final double damage, speed, hullMax;
+  const CaptainData({required this.id, required this.name, required this.title,
+    required this.ability, required this.abilityDesc, required this.tradeoff,
+    required this.emoji, required this.imagePath, required this.color,
+    required this.damage, required this.speed, required this.hullMax});
+}
+
+const captains = [
+  CaptainData(id: CaptainId.danny, name: 'DANNY', title: 'El Estratega',
+    emoji: '🪖', imagePath: 'assets/images/dany.png', ability: 'MODO FÉNIX',
+    abilityDesc: 'Anticipa el peligro 90ms antes.\nVentana de daño máximo en boss.',
+    tradeoff: 'Cadencia lenta — timing perfecto',
+    color: cGold, damage: 1.8, speed: 0.75, hullMax: 120),
+  CaptainData(id: CaptainId.andy, name: 'ANDY', title: 'El Impulsivo',
+    emoji: '⚡', imagePath: 'assets/images/andy.png', ability: 'MODO KALMAN',
+    abilityDesc: 'Cadencia x2 en zona de calor.\nEl caos es tu combustible.',
+    tradeoff: 'Hull baja 2x más rápido',
+    color: cIce, damage: 1.0, speed: 1.5, hullMax: 70),
+  CaptainData(id: CaptainId.denise, name: 'DENISE', title: 'La Guardiana',
+    emoji: '🛡️', imagePath: 'assets/images/denisse.png', ability: 'WATCH DOG',
+    abilityDesc: 'Teletransporte de emergencia\ncuando hull < 15%.',
+    tradeoff: 'Menor daño base',
+    color: cPurple, damage: 0.8, speed: 1.0, hullMax: 150),
+];
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  SPLASH
@@ -89,41 +122,7 @@ class _SplashState extends State<SplashScreen>
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  DATOS
-// ═══════════════════════════════════════════════════════════════════════════
-enum Captain { danny, andy, denise }
-
-class CaptainData {
-  final Captain id;
-  final String name, title, ability, abilityDesc, tradeoff, emoji, imagePath;
-  final Color color;
-  final double damage, speed, hullMax;
-  const CaptainData({required this.id, required this.name, required this.title,
-    required this.ability, required this.abilityDesc, required this.tradeoff,
-    required this.emoji, required this.imagePath, required this.color,
-    required this.damage, required this.speed, required this.hullMax});
-}
-
-const captains = [
-  CaptainData(id: Captain.danny, name: 'DANNY', title: 'El Estratega',
-    emoji: '🪖', imagePath: 'assets/images/dany.png', ability: 'MODO FÉNIX',
-    abilityDesc: 'Anticipa el peligro 90ms antes.\nVentana de daño máximo en boss.\nUn disparo preciso vale por diez.',
-    tradeoff: 'Cadencia lenta — necesita timing perfecto',
-    color: cGold, damage: 1.8, speed: 0.75, hullMax: 120),
-  CaptainData(id: Captain.andy, name: 'ANDY', title: 'El Impulsivo',
-    emoji: '⚡', imagePath: 'assets/images/andy.png', ability: 'MODO KALMAN',
-    abilityDesc: 'Estabiliza la realidad local.\nCadencia x2 en zona de calor.\nEl caos es tu combustible.',
-    tradeoff: 'Hull baja 2x más rápido — frágil',
-    color: cIce, damage: 1.0, speed: 1.5, hullMax: 70),
-  CaptainData(id: Captain.denise, name: 'DENISE', title: 'La Guardiana',
-    emoji: '🛡️', imagePath: 'assets/images/denisse.png', ability: 'WATCH DOG',
-    abilityDesc: 'Teletransporte de emergencia\ncuando hull < 15%.\nNadie la derriba — solo se cansa.',
-    tradeoff: 'Menor daño base — solo brilla sobreviviendo',
-    color: cPurple, damage: 0.8, speed: 1.0, hullMax: 150),
-];
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  SELECCIÓN
+//  SELECCIÓN DE CAPITÁN
 // ═══════════════════════════════════════════════════════════════════════════
 class CaptainSelectScreen extends StatefulWidget {
   const CaptainSelectScreen({super.key});
@@ -181,9 +180,11 @@ class _SelState extends State<CaptainSelectScreen>
               onTap: _cur>0 ? ()=>_go(-1) : null),
             const SizedBox(width: 10),
             Expanded(child: GestureDetector(
-              onTap: () => Navigator.pushReplacement(ctx,
-                MaterialPageRoute(builder: (_) =>
-                  GameScreen(captain: captains[_cur]))),
+              onTap: () {
+                final game = PC2Game(captain: captains[_cur]);
+                Navigator.pushReplacement(ctx, MaterialPageRoute(
+                  builder: (_) => GameWidget(game: game)));
+              },
               child: Container(height: 52,
                 decoration: BoxDecoration(
                   color: cap.color.withOpacity(0.12),
@@ -289,566 +290,565 @@ class _Arr extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  GAME SCREEN — FPS ESTILO DOOM
+//  FLAME GAME — PC2Game
 // ═══════════════════════════════════════════════════════════════════════════
-class GameScreen extends StatefulWidget {
+class PC2Game extends FlameGame with TapCallbacks, HasCollisionDetection {
   final CaptainData captain;
-  const GameScreen({super.key, required this.captain});
-  @override State<GameScreen> createState() => _GS();
-}
+  PC2Game({required this.captain});
 
-class _GS extends State<GameScreen> with TickerProviderStateMixin {
+  // Audio
+  final _sfxShoot   = AudioPlayer();
+  final _sfxHit     = AudioPlayer();
+  final _sfxAbility = AudioPlayer();
+  final _bgMusic    = AudioPlayer();
 
-  // Estado jugador
+  // Estado
   late double hull;
   double abilityCharge = 0;
   bool abilityActive = false;
   double abilityTimer = 0;
   int score = 0;
+  int killed = 0;
+  bool bossSpawned = false;
+  bool bossDead = false;
 
-  // Enemigos — cada uno tiene posición en "mundo" -1..1 horizontal, distancia 0..1
-  final List<_Mob> _mobs = [];
-  double _spawnT = 0;
-  int _killed = 0;
-  bool _bossSpawned = false;
-  _BossData? _boss;
+  // Componentes
+  late SpriteComponent _background;
+  late SpriteComponent _weapon;
+  late _HudComponent _hud;
+  late _CrosshairComp _crosshair;
 
-  // Disparo
+  // Timers
+  double _spawnT = 1.5;
   double _shootCD = 0;
-  double _muzzle = 0; // flash de disparo
 
-  // Daño recibido
-  double _hitFlash = 0;
-
-  // Impactos visuales en pantalla
-  final List<_Hit> _hits = [];
-
-  // Proyectiles del boss
-  final List<_BossProj> _bossProjs = [];
-
-  late AnimationController _loop;
   final _rng = Random();
-  double _prev = 0;
 
-  @override void initState() {
-    super.initState();
-    hull = widget.captain.hullMax / 150.0;
-    _loop = AnimationController(vsync: this,
-        duration: const Duration(milliseconds: 16))
-      ..addListener(_tick)..repeat();
+  @override
+  Future<void> onLoad() async {
+    hull = captain.hullMax / 150.0;
+
+    // Fondo
+    final bgSprite = await Sprite.load('bg_stage1.png');
+    _background = SpriteComponent(
+      sprite: bgSprite,
+      size: size,
+      position: Vector2.zero(),
+      priority: -10);
+    add(_background);
+
+    // Arma (primera persona — abajo derecha)
+    final wpSprite = await Sprite.load('weapon_fp.png');
+    _weapon = SpriteComponent(
+      sprite: wpSprite,
+      size: Vector2(size.x * 0.72, size.y * 0.30),
+      position: Vector2(size.x * 0.28, size.y * 0.72),
+      priority: 100);
+    add(_weapon);
+
+    // HUD overlay
+    _hud = _HudComponent(game: this);
+    add(_hud);
+
+    // Mira central
+    _crosshair = _CrosshairComp(
+      position: size / 2,
+      color: captain.color);
+    add(_crosshair);
+
+    // Audio fondo
+    try {
+      await _bgMusic.setReleaseMode(ReleaseMode.loop);
+      await _bgMusic.play(AssetSource('audio/fondo_espacial.mp3'),
+        volume: 0.4);
+    } catch (_) {}
   }
-  @override void dispose() { _loop.dispose(); super.dispose(); }
 
-  // ── TICK ──────────────────────────────────────────────────────────────────
-  void _tick() {
-    final now = DateTime.now().millisecondsSinceEpoch / 1000.0;
-    final dt = _prev == 0 ? 0.016 : (now - _prev).clamp(0.0, 0.05);
-    _prev = now;
+  @override
+  void update(double dt) {
+    super.update(dt);
 
     // Habilidad
-    if (!abilityActive) abilityCharge = (abilityCharge + dt*0.055).clamp(0,1);
-    if (abilityActive) { abilityTimer -= dt;
-      if (abilityTimer <= 0) { abilityActive = false; abilityCharge = 0; } }
+    if (!abilityActive) {
+      abilityCharge = (abilityCharge + dt * 0.055).clamp(0, 1);
+    } else {
+      abilityTimer -= dt;
+      if (abilityTimer <= 0) { abilityActive = false; abilityCharge = 0; }
+    }
 
-    // Disparo CD
+    // Shoot cooldown
     _shootCD = (_shootCD - dt).clamp(-1, 10);
 
-    // Muzzle flash decay
-    if (_muzzle > 0) _muzzle = (_muzzle - dt*6).clamp(0,1);
-    if (_hitFlash > 0) _hitFlash = (_hitFlash - dt*3).clamp(0,1);
-
-    // Hits decay
-    for (final h in _hits) h.life -= dt*2;
-    _hits.removeWhere((h) => h.life <= 0);
-
     // Spawn enemigos
-    if (!_bossSpawned) {
+    if (!bossSpawned) {
       _spawnT -= dt;
-      if (_spawnT <= 0 && _killed < 20) {
-        _spawnT = 1.8 - (score/5000).clamp(0, 1.0);
-        _mobs.add(_Mob(
-          // posición horizontal aleatoria en el "mundo" -0.8..0.8
-          wx: (_rng.nextDouble() * 1.6) - 0.8,
-          dist: 0.02, // empieza lejos (pequeño)
-          speed: 0.06 + _rng.nextDouble() * 0.05,
-          hp: 2.0, type: _rng.nextInt(3)));
+      if (_spawnT <= 0 && killed < 20) {
+        _spawnT = 1.6 - (score / 5000).clamp(0, 1.0);
+        _spawnEnemy();
       }
-      // Mover enemigos — se acercan (dist crece → se ven más grandes)
-      for (final m in _mobs) {
-        m.dist += dt * m.speed;
-        // Movimiento lateral ondulante
-        m.wx += sin(m.dist * 5 + m.phase) * dt * 0.08;
-        m.wx = m.wx.clamp(-0.95, 0.95);
-        // Si llega muy cerca → daño al jugador
-        if (m.dist >= 1.0) {
-          hull = (hull - 0.07).clamp(0, 1);
-          _hitFlash = 1.0;
-          m.dead = true;
-        }
-      }
-      _mobs.removeWhere((m) => m.dead);
-      if (_killed >= 20 && !_bossSpawned) {
-        _bossSpawned = true;
-        _boss = _BossData();
+      if (killed >= 20 && !bossSpawned) {
+        bossSpawned = true;
+        _spawnBoss();
       }
     }
-
-    // Boss
-    if (_boss != null && !_boss!.dead) {
-      _boss!.t += dt;
-      _boss!.wx += sin(_boss!.t * 0.7) * dt * 0.06;
-      _boss!.wx = _boss!.wx.clamp(-0.6, 0.6);
-      // Boss siempre a dist media-fija, se mueve lateral
-      _boss!.atkT -= dt;
-      if (_boss!.atkT <= 0) {
-        _boss!.atkT = 2.8;
-        _bossProjs.add(_BossProj(sx: _boss!.wx));
-      }
-    }
-
-    // Proyectiles boss
-    for (final p in _bossProjs) {
-      p.life -= dt * 0.6;
-      p.sy += dt * 0.5; // bajan en pantalla
-    }
-    _bossProjs.removeWhere((p) {
-      if (p.life <= 0) return true;
-      if (p.sy >= 0.85) { // impacto
-        hull = (hull - 0.09).clamp(0, 1);
-        _hitFlash = 1.0;
-        return true;
-      }
-      return false;
-    });
-
-    setState(() {});
   }
 
-  // ── DISPARO ────────────────────────────────────────────────────────────────
-  void _fireAt(double sx, double sy, Size size) {
+  void _spawnEnemy() {
+    final type = _rng.nextInt(3);
+    final xPos = size.x * (0.1 + _rng.nextDouble() * 0.8);
+    add(_EnemyComp(
+      game: this,
+      type: type,
+      startPos: Vector2(xPos, -80),
+      speed: 80 + _rng.nextDouble() * 60,
+      hp: 2.0 * captain.damage.clamp(0.5, 2.0)));
+  }
+
+  void _spawnBoss() {
+    add(_BossComp(game: this, startPos: Vector2(size.x / 2, 80)));
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
     if (_shootCD > 0) return;
-    final cadMult = (abilityActive && widget.captain.id == Captain.andy)
-        ? 0.5 : 1.0;
-    _shootCD = 0.22 * cadMult / widget.captain.speed;
-    _muzzle = 1.0;
+    final cadMult = (abilityActive && captain.id == CaptainId.andy) ? 0.5 : 1.0;
+    _shootCD = 0.22 * cadMult / captain.speed;
 
-    // Convertir toque a coordenadas de mundo normalizadas
-    final normX = (sx / size.width - 0.5) * 2; // -1..1
-    final normY = sy / size.height;             // 0..1
+    // Sonido disparo
+    try { _sfxShoot.play(AssetSource('audio/disparo_laser.mp3'), volume: 0.7); }
+    catch (_) {}
 
-    // Verificar impacto en enemigos
-    bool hit = false;
-    for (final m in _mobs.toList()) {
-      // Proyección del enemigo en pantalla
-      final screenX = _mobScreenX(m, size);
-      final screenY = _mobScreenY(m, size);
-      final mobSize = _mobSize(m, size);
-      if ((sx - screenX).abs() < mobSize * 0.55 &&
-          (sy - screenY).abs() < mobSize * 0.55) {
-        m.hp -= widget.captain.damage;
-        _hits.add(_Hit(x: sx/size.width, y: sy/size.height));
-        hit = true;
-        if (m.hp <= 0) {
-          m.dead = true; _killed++; score += 100;
-        }
-        break;
-      }
-    }
+    // Flash arma
+    _weapon.add(OpacityEffect.to(0.3,
+      EffectController(duration: 0.05, reverseDuration: 0.05)));
 
-    // Impacto en boss
-    if (!hit && _boss != null && !_boss!.dead) {
-      final bsx = _bossScreenX(_boss!, size);
-      final bsy = _bossScreenY(size);
-      final bs = _bossSize(size);
-      if ((sx - bsx).abs() < bs * 0.55 && (sy - bsy).abs() < bs * 0.45) {
-        _boss!.hp -= widget.captain.damage;
-        _hits.add(_Hit(x: sx/size.width, y: sy/size.height));
-        score += 10;
-        if (_boss!.hp <= 0) {
-          _boss!.dead = true; score += 5000;
-        }
-      }
-    }
+    // Disparo en la posición tocada
+    final tp = event.localPosition;
+    add(_BulletComp(
+      game: this,
+      startPos: Vector2(size.x / 2, size.y * 0.75),
+      targetPos: Vector2(tp.x, tp.y),
+      damage: captain.damage));
   }
 
-  // ── Proyección pseudo-3D ────────────────────────────────────────────────
-  // dist 0..1 = lejos..cerca
-  double _mobScreenX(_Mob m, Size sz) =>
-    sz.width/2 + m.wx * sz.width * 0.45 * (0.3 + m.dist * 0.9);
-
-  double _mobScreenY(_Mob m, Size sz) =>
-    sz.height * (0.25 + m.dist * 0.35); // sube en pantalla al acercarse
-
-  double _mobSize(_Mob m, Size sz) =>
-    (20 + m.dist * 200).clamp(20, 220); // crece mucho al acercarse
-
-  double _bossScreenX(_BossData b, Size sz) =>
-    sz.width/2 + b.wx * sz.width * 0.35;
-
-  double _bossScreenY(Size sz) => sz.height * 0.28;
-
-  double _bossSize(Size sz) => sz.width * 0.45;
-
-  // ── BUILD ──────────────────────────────────────────────────────────────────
-  @override Widget build(BuildContext ctx) {
-    final cap = widget.captain;
-    final sz = MediaQuery.of(ctx).size;
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTapDown: (d) => _fireAt(d.localPosition.dx, d.localPosition.dy, sz),
-        child: Stack(children: [
-
-          // ── FONDO COMPLETO ───────────────────────────────────────────
-          Positioned.fill(child: Image.asset('assets/images/bg_stage1.png',
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: const Color(0xFF020810)))),
-
-          // Overlay oscuro sutil
-          Positioned.fill(child:
-            Container(color: Colors.black.withOpacity(0.28))),
-
-          // ── ENEMIGOS (pseudo-3D, se ven más grandes al acercarse) ────
-          for (final m in _mobs) ...[
-            Positioned(
-              left: _mobScreenX(m, sz) - _mobSize(m, sz)/2,
-              top:  _mobScreenY(m, sz) - _mobSize(m, sz)/2,
-              child: _MobWidget(m: m,
-                size: _mobSize(m, sz), capColor: cap.color)),
-          ],
-
-          // ── BOSS ─────────────────────────────────────────────────────
-          if (_boss != null && !_boss!.dead) ...[
-            Positioned(
-              left: _bossScreenX(_boss!, sz) - _bossSize(sz)/2,
-              top:  _bossScreenY(sz) - _bossSize(sz)*0.4,
-              child: _BossWidget2(boss: _boss!, size: _bossSize(sz))),
-            // Barra HP boss
-            Positioned(top: 90, left: 30, right: 30,
-              child: Column(children: [
-                const Text('⚠ COMANDANTE ALIENÍGENA',
-                  style: TextStyle(color: cRed, fontSize: 9,
-                    fontFamily: 'monospace', letterSpacing: 1,
-                    shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
-                const SizedBox(height: 3),
-                ClipRRect(borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: (_boss!.hp/50).clamp(0,1), minHeight: 7,
-                    backgroundColor: Colors.black38,
-                    valueColor: const AlwaysStoppedAnimation(cRed))),
-              ])),
-          ],
-
-          // Boss muerto
-          if (_boss != null && _boss!.dead)
-            Center(child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(16)),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text('SECTOR LIMPIO', style: TextStyle(color: cap.color,
-                  fontSize: 26, fontFamily: 'monospace',
-                  fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('DESCENDIENDO A LA NAVE...',
-                  style: TextStyle(color: Colors.white60, fontSize: 13,
-                    fontFamily: 'monospace')),
-              ]))),
-
-          // ── PROYECTILES BOSS (caen desde arriba) ─────────────────────
-          for (final p in _bossProjs)
-            Positioned(
-              left: sz.width/2 + p.sx * sz.width * 0.35 - 10,
-              top: p.sy * sz.height - 10,
-              child: Container(width: 20, height: 20,
-                decoration: BoxDecoration(color: cFire,
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: cFire.withOpacity(0.8),
-                    blurRadius: 12, spreadRadius: 2)]))),
-
-          // ── MARCAS DE IMPACTO ─────────────────────────────────────────
-          for (final h in _hits)
-            Positioned(
-              left: h.x * sz.width - 12, top: h.y * sz.height - 12,
-              child: Opacity(opacity: h.life,
-                child: Container(width: 24, height: 24,
-                  decoration: BoxDecoration(shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    color: Colors.white.withOpacity(0.3))))),
-
-          // ── MIRA CENTRAL FIJA ─────────────────────────────────────────
-          Center(child: CustomPaint(size: const Size(52, 52),
-            painter: _Crosshair(color: cap.color, active: abilityActive))),
-
-          // ── ARMA EN PRIMERA PERSONA ───────────────────────────────────
-          Positioned(bottom: 0, left: 0, right: 0,
-            child: Stack(alignment: Alignment.bottomRight, children: [
-              Image.asset('assets/images/weapon_fp.png',
-                width: sz.width * 0.75,
-                height: sz.height * 0.28,
-                fit: BoxFit.contain,
-                alignment: Alignment.bottomRight,
-                errorBuilder: (_, __, ___) =>
-                  CustomPaint(size: Size(sz.width*0.65, sz.height*0.22),
-                    painter: _FallbackGun(color: cap.color))),
-              // Muzzle flash
-              if (_muzzle > 0)
-                Positioned(top: 0, right: sz.width * 0.18,
-                  child: Container(width: 50, height: 50,
-                    decoration: BoxDecoration(shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(_muzzle * 0.85),
-                      boxShadow: [BoxShadow(
-                        color: cap.color.withOpacity(_muzzle),
-                        blurRadius: 35, spreadRadius: 12)]))),
-            ])),
-
-          // ── HIT FLASH (daño) ──────────────────────────────────────────
-          if (_hitFlash > 0)
-            Positioned.fill(child: Container(
-              color: cRed.withOpacity(_hitFlash * 0.38))),
-
-          // ── HUD ───────────────────────────────────────────────────────
-          Positioned(top: 46, left: 14,
-            child: _HUD(label: 'HULL', value: hull,
-              color: hull > 0.5 ? cIce : hull > 0.25 ? cGold : cRed,
-              width: 110)),
-          Positioned(top: 46, right: 14,
-            child: _HUDRight(label: cap.ability, value: abilityCharge,
-              color: abilityActive ? Colors.white : cap.color)),
-          Positioned(top: 50, left: 0, right: 0,
-            child: Center(child: Text('STAGE 1 · TECHO DE NAVE ALIENÍGENA',
-              style: TextStyle(color: Colors.white.withOpacity(0.3),
-                fontSize: 8, fontFamily: 'monospace', letterSpacing: 2,
-                shadows: const [Shadow(color: Colors.black, blurRadius: 4)])))),
-
-          // Score y bajas
-          Positioned(bottom: sz.height*0.30, left: 14,
-            child: Text('SCORE ${score.toString().padLeft(6,'0')}',
-              style: const TextStyle(color: Colors.white54, fontSize: 11,
-                fontFamily: 'monospace',
-                shadows: [Shadow(color: Colors.black, blurRadius: 4)]))),
-          if (!_bossSpawned)
-            Positioned(bottom: sz.height*0.30, right: 14,
-              child: Text('BAJAS: $_killed/20',
-                style: TextStyle(color: cap.color.withOpacity(0.6),
-                  fontSize: 10, fontFamily: 'monospace',
-                  shadows: const [Shadow(color: Colors.black,
-                    blurRadius: 4)]))),
-
-          // Casco crítico
-          if (hull < 0.15)
-            Positioned(top: sz.height*0.30, left: 0, right: 0,
-              child: Center(child: Text('⚠ CASCO CRÍTICO ⚠',
-                style: TextStyle(color: cRed.withOpacity(0.95),
-                  fontSize: 16, fontFamily: 'monospace',
-                  fontWeight: FontWeight.bold,
-                  shadows: const [Shadow(color: Colors.black,
-                    blurRadius: 6)])))),
-
-          // Botón habilidad
-          Positioned(bottom: sz.height*0.29, right: 14,
-            child: GestureDetector(onTap: _activateAbility,
-              child: Container(width: 60, height: 60,
-                decoration: BoxDecoration(shape: BoxShape.circle,
-                  color: abilityCharge >= 1.0
-                    ? cap.color.withOpacity(0.25) : Colors.black54,
-                  border: Border.all(
-                    color: abilityActive ? Colors.white :
-                      abilityCharge >= 1.0 ? cap.color : Colors.white24,
-                    width: 2)),
-                child: Center(child: Text(cap.emoji,
-                  style: const TextStyle(fontSize: 22)))))),
-
-          // Pausa
-          Positioned(top: 42, right: 58,
-            child: GestureDetector(onTap: () => _pause(ctx),
-              child: Container(width: 34, height: 34,
-                decoration: BoxDecoration(color: Colors.black45,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24)),
-                child: const Icon(Icons.pause,
-                  color: Colors.white54, size: 16)))),
-        ])));
+  void onEnemyKilled(Vector2 pos) {
+    killed++;
+    score += 100;
+    add(_ExplosionComp(position: pos, big: false));
+    try { _sfxHit.play(AssetSource('audio/golpe_impacto.mp3'), volume: 0.8); }
+    catch (_) {}
   }
 
-  void _activateAbility() {
+  void onBossKilled(Vector2 pos) {
+    bossDead = true;
+    score += 5000;
+    add(_ExplosionComp(position: pos, big: true));
+  }
+
+  void takeDamage(double amount) {
+    hull = (hull - amount).clamp(0, 1);
+    // Flash rojo pantalla
+    add(_DamageFlash());
+  }
+
+  void activateAbility() {
     if (abilityCharge < 1.0 || abilityActive) return;
-    setState(() {
-      abilityActive = true;
-      abilityTimer = switch(widget.captain.id) {
-        Captain.danny => 8.0, Captain.andy => 5.0, Captain.denise => 3.0,
-      };
+    abilityActive = true;
+    abilityTimer = switch(captain.id) {
+      CaptainId.danny => 8.0, CaptainId.andy => 5.0, CaptainId.denise => 3.0,
+    };
+    try { _sfxAbility.play(AssetSource('audio/activar_habilidad.mp3')); }
+    catch (_) {}
+  }
+
+  void goToMenu() {
+    _bgMusic.stop();
+    final context = buildContext;
+    if (context != null && context.mounted) {
+      Navigator.pushAndRemoveUntil(context,
+        MaterialPageRoute(builder: (_) => const CaptainSelectScreen()),
+        (_) => false);
+    }
+  }
+
+  @override
+  void onRemove() {
+    _bgMusic.stop();
+    _bgMusic.dispose();
+    _sfxShoot.dispose();
+    _sfxHit.dispose();
+    _sfxAbility.dispose();
+    super.onRemove();
+  }
+
+  @override
+  Color backgroundColor() => const Color(0xFF020A08);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  COMPONENTE ENEMIGO
+// ═══════════════════════════════════════════════════════════════════════════
+class _EnemyComp extends SpriteComponent with TapCallbacks {
+  final PC2Game game;
+  final int type;
+  final double speed;
+  double hp;
+  final _rng = Random();
+  double _phase;
+  double _t = 0;
+
+  _EnemyComp({required this.game, required this.type,
+    required Vector2 startPos, required this.speed, required this.hp})
+    : _phase = Random().nextDouble() * pi * 2,
+      super(position: startPos, size: Vector2(64, 64),
+        anchor: Anchor.center, priority: 10);
+
+  @override
+  Future<void> onLoad() async {
+    sprite = await Sprite.load('enemy_type$type.png');
+  }
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    // Baja hacia el jugador
+    position.y += speed * dt;
+    // Movimiento lateral ondulante
+    position.x += sin(_t * 2.5 + _phase) * 40 * dt;
+    position.x = position.x.clamp(40, game.size.x - 40);
+
+    // Crece al acercarse (efecto pseudo-3D)
+    final progress = (position.y / game.size.y).clamp(0.0, 1.0);
+    final s = 48 + progress * 120;
+    size = Vector2(s, s);
+
+    // Si llega abajo → daño al jugador
+    if (position.y > game.size.y + 40) {
+      game.takeDamage(0.07);
+      removeFromParent();
+    }
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    hp -= game.captain.damage;
+    // Flash de impacto
+    add(OpacityEffect.to(0.2,
+      EffectController(duration: 0.06, reverseDuration: 0.06)));
+    if (hp <= 0) {
+      game.onEnemyKilled(position);
+      removeFromParent();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  COMPONENTE BOSS
+// ═══════════════════════════════════════════════════════════════════════════
+class _BossComp extends SpriteComponent with TapCallbacks {
+  final PC2Game game;
+  double hp = 50;
+  double _t = 0;
+  double _atkT = 3.0;
+
+  _BossComp({required this.game, required Vector2 startPos})
+    : super(position: startPos, size: Vector2(160, 130),
+        anchor: Anchor.center, priority: 10);
+
+  @override
+  Future<void> onLoad() async {
+    sprite = await Sprite.load('enemy_boss_s1.png');
+    // Glow rojo
+    add(ColorEffect(
+      const Color(0xFFFF2244),
+      EffectController(duration: 1.0, reverseDuration: 1.0,
+        infinite: true, alternate: true),
+      opacities: const [0.0, 0.3]));
+  }
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    // Movimiento lateral
+    position.x = game.size.x / 2 + sin(_t * 0.8) * game.size.x * 0.28;
+    // Ataque
+    _atkT -= dt;
+    if (_atkT <= 0) {
+      _atkT = 2.8;
+      game.add(_BossBullet(
+        game: game,
+        startPos: position.clone()));
+    }
+  }
+
+  @override
+  void onTapDown(TapDownEvent event) {
+    hp -= game.captain.damage;
+    add(OpacityEffect.to(0.2,
+      EffectController(duration: 0.07, reverseDuration: 0.07)));
+    if (hp <= 0) {
+      game.onBossKilled(position);
+      removeFromParent();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BALA DEL JUGADOR
+// ═══════════════════════════════════════════════════════════════════════════
+class _BulletComp extends CircleComponent {
+  final PC2Game game;
+  final Vector2 _vel;
+
+  _BulletComp({required this.game,
+    required Vector2 startPos, required Vector2 targetPos,
+    required double damage})
+    : _vel = (targetPos - startPos).normalized() * 900,
+      super(radius: 5, position: startPos.clone(),
+        anchor: Anchor.center, priority: 50,
+        paint: Paint()..color = game.captain.color);
+
+  @override
+  void update(double dt) {
+    position += _vel * dt;
+    if (position.y < -20 || position.x < -20 ||
+        position.x > game.size.x + 20) {
+      removeFromParent();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  BALA DEL BOSS
+// ═══════════════════════════════════════════════════════════════════════════
+class _BossBullet extends CircleComponent {
+  final PC2Game game;
+
+  _BossBullet({required this.game, required Vector2 startPos})
+    : super(radius: 10, position: startPos.clone(),
+        anchor: Anchor.center, priority: 50,
+        paint: Paint()..color = const Color(0xFFFF5500));
+
+  @override
+  void update(double dt) {
+    position.y += 220 * dt;
+    if (position.y > game.size.y * 0.82) {
+      game.takeDamage(0.09);
+      removeFromParent();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  EXPLOSIÓN
+// ═══════════════════════════════════════════════════════════════════════════
+class _ExplosionComp extends CircleComponent {
+  final bool big;
+
+  _ExplosionComp({required Vector2 position, required this.big})
+    : super(
+        radius: big ? 60 : 30,
+        position: position,
+        anchor: Anchor.center,
+        priority: 80,
+        paint: Paint()..color = const Color(0xFFFF6600));
+
+  @override
+  Future<void> onLoad() async {
+    add(OpacityEffect.to(0,
+      EffectController(duration: big ? 0.6 : 0.35)));
+    add(ScaleEffect.to(Vector2.all(big ? 2.5 : 2.0),
+      EffectController(duration: big ? 0.6 : 0.35)));
+    Future.delayed(Duration(milliseconds: big ? 650 : 380), () {
+      if (isMounted) removeFromParent();
     });
   }
-
-  void _pause(BuildContext ctx) => showDialog(
-    context: ctx, barrierColor: Colors.black54,
-    builder: (_) => AlertDialog(
-      backgroundColor: cPanel,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: widget.captain.color.withOpacity(0.4))),
-      title: Text('PAUSA', textAlign: TextAlign.center,
-        style: TextStyle(color: widget.captain.color,
-          fontFamily: 'monospace', letterSpacing: 3)),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx),
-          child: Text('CONTINUAR', style: TextStyle(
-            color: widget.captain.color, fontFamily: 'monospace'))),
-        TextButton(
-          onPressed: () => Navigator.pushAndRemoveUntil(ctx,
-            MaterialPageRoute(builder: (_) => const CaptainSelectScreen()),
-            (_) => false),
-          child: const Text('MENÚ', style: TextStyle(
-            color: Colors.white38, fontFamily: 'monospace'))),
-      ]));
 }
 
-// ── Widgets de enemigo/boss ────────────────────────────────────────────────
-class _MobWidget extends StatelessWidget {
-  final _Mob m; final double size; final Color capColor;
-  const _MobWidget({required this.m, required this.size, required this.capColor});
-  @override Widget build(BuildContext ctx) {
-    final opacity = (m.hp / 2).clamp(0.25, 1.0);
-    return Opacity(opacity: opacity,
-      child: SizedBox(width: size, height: size,
-        child: Image.asset('assets/images/enemy_type${m.type}.png',
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => Container(
-            width: size, height: size,
-            decoration: BoxDecoration(
-              color: [const Color(0xFF44FF88), cRed,
-                const Color(0xFFCC8833)][m.type].withOpacity(0.75),
-              shape: BoxShape.circle)))));
+// ═══════════════════════════════════════════════════════════════════════════
+//  FLASH DAÑO
+// ═══════════════════════════════════════════════════════════════════════════
+class _DamageFlash extends RectangleComponent {
+  _DamageFlash() : super(priority: 200,
+    paint: Paint()..color = const Color(0x66FF2244));
+
+  @override
+  Future<void> onLoad() async {
+    size = game!.size;
+    add(OpacityEffect.to(0,
+      EffectController(duration: 0.35)));
+    Future.delayed(const Duration(milliseconds: 380), () {
+      if (isMounted) removeFromParent();
+    });
   }
 }
 
-class _BossWidget2 extends StatelessWidget {
-  final _BossData boss; final double size;
-  const _BossWidget2({required this.boss, required this.size});
-  @override Widget build(BuildContext ctx) => Stack(
-    alignment: Alignment.center, children: [
-    // Glow
-    Container(width: size, height: size*0.8,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(size/2),
-        boxShadow: [BoxShadow(color: cRed.withOpacity(0.5),
-          blurRadius: 40, spreadRadius: 15)])),
-    Image.asset('assets/images/enemy_boss_s1.png',
-      width: size, height: size*0.8, fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => Container(
-        width: size*0.6, height: size*0.6,
-        decoration: BoxDecoration(color: cRed.withOpacity(0.85),
-          shape: BoxShape.circle))),
-  ]);
-}
-
-// ── HUD widgets ────────────────────────────────────────────────────────────
-class _HUD extends StatelessWidget {
-  final String label; final double value;
-  final Color color; final double width;
-  const _HUD({required this.label, required this.value,
-    required this.color, required this.width});
-  @override Widget build(BuildContext ctx) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label, style: TextStyle(color: color.withOpacity(0.7),
-      fontSize: 8, fontFamily: 'monospace',
-      shadows: const [Shadow(color: Colors.black, blurRadius: 4)])),
-    const SizedBox(height: 3),
-    SizedBox(width: width, height: 6, child: ClipRRect(
-      borderRadius: BorderRadius.circular(3),
-      child: LinearProgressIndicator(value: value.clamp(0.0,1.0),
-        backgroundColor: Colors.black38,
-        valueColor: AlwaysStoppedAnimation(color)))),
-  ]);
-}
-
-class _HUDRight extends StatelessWidget {
-  final String label; final double value; final Color color;
-  const _HUDRight({required this.label, required this.value,
-    required this.color});
-  @override Widget build(BuildContext ctx) => Column(
-    crossAxisAlignment: CrossAxisAlignment.end, children: [
-    Text(label, style: TextStyle(color: color,
-      fontSize: 8, fontFamily: 'monospace',
-      shadows: const [Shadow(color: Colors.black, blurRadius: 4)])),
-    const SizedBox(height: 3),
-    SizedBox(width: 80, height: 5, child: ClipRRect(
-      borderRadius: BorderRadius.circular(2),
-      child: LinearProgressIndicator(value: value.clamp(0.0,1.0),
-        backgroundColor: Colors.black38,
-        valueColor: AlwaysStoppedAnimation(color)))),
-  ]);
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
-//  MODELOS DE DATOS
+//  MIRA
 // ═══════════════════════════════════════════════════════════════════════════
-class _Mob {
-  double wx, dist, speed, hp; final int type;
-  final double phase = Random().nextDouble() * pi * 2;
-  bool dead = false;
-  _Mob({required this.wx, required this.dist, required this.speed,
-    required this.hp, required this.type});
-}
+class _CrosshairComp extends PositionComponent {
+  final Color color;
+  _CrosshairComp({required Vector2 position, required this.color})
+    : super(position: position, anchor: Anchor.center,
+        size: Vector2(52, 52), priority: 150);
 
-class _BossData {
-  double wx = 0, t = 0, atkT = 3.0, hp = 50;
-  bool dead = false;
-}
-
-class _BossProj {
-  double sx, sy; double life = 1.0;
-  _BossProj({required this.sx}) : sy = 0.05;
-}
-
-class _Hit {
-  double x, y; double life = 1.0;
-  _Hit({required this.x, required this.y});
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  PAINTERS
-// ═══════════════════════════════════════════════════════════════════════════
-class _Crosshair extends CustomPainter {
-  final Color color; final bool active;
-  const _Crosshair({required this.color, required this.active});
-  @override void paint(Canvas canvas, Size s) {
+  @override
+  void render(Canvas canvas) {
     final p = Paint()
-      ..color = color.withOpacity(active ? 1.0 : 0.85)
-      ..strokeWidth = active ? 2.0 : 1.5;
-    final cx = s.width/2, cy = s.height/2;
-    // Líneas
-    canvas.drawLine(Offset(0, cy), Offset(cx-12, cy), p);
-    canvas.drawLine(Offset(cx+12, cy), Offset(s.width, cy), p);
-    canvas.drawLine(Offset(cx, 0), Offset(cx, cy-12), p);
-    canvas.drawLine(Offset(cx, cy+12), Offset(cx, s.height), p);
-    // Círculo
-    canvas.drawCircle(Offset(cx, cy), active ? 6 : 4,
+      ..color = color.withOpacity(0.85)
+      ..strokeWidth = 1.8
+      ..style = PaintingStyle.stroke;
+    final cx = size.x / 2, cy = size.y / 2;
+    canvas.drawLine(Offset(0, cy), Offset(cx - 10, cy), p);
+    canvas.drawLine(Offset(cx + 10, cy), Offset(size.x, cy), p);
+    canvas.drawLine(Offset(cx, 0), Offset(cx, cy - 10), p);
+    canvas.drawLine(Offset(cx, cy + 10), Offset(cx, size.y), p);
+    canvas.drawCircle(Offset(cx, cy), 5,
       Paint()..color = color.withOpacity(0.9)
         ..style = PaintingStyle.stroke..strokeWidth = 1.5);
-    // Punto central
-    canvas.drawCircle(Offset(cx, cy), 1.5,
+    canvas.drawCircle(Offset(cx, cy), 1.8,
       Paint()..color = color..style = PaintingStyle.fill);
   }
-  @override bool shouldRepaint(_) => true;
 }
 
-class _FallbackGun extends CustomPainter {
-  final Color color;
-  const _FallbackGun({required this.color});
-  @override void paint(Canvas canvas, Size s) {
-    final p = Paint()..color = color.withOpacity(0.55)..style = PaintingStyle.fill;
-    canvas.drawRRect(RRect.fromLTRBR(s.width*0.05, s.height*0.35,
-      s.width*0.92, s.height*0.68, const Radius.circular(6)), p);
-    canvas.drawRRect(RRect.fromLTRBR(s.width*0.55, s.height*0.22,
-      s.width*0.96, s.height*0.42, const Radius.circular(4)), p);
-    final gp = Paint()..color = Colors.grey.shade700;
-    canvas.drawRRect(RRect.fromLTRBR(s.width*0.15, s.height*0.62,
-      s.width*0.42, s.height*1.0, const Radius.circular(10)), gp);
-    canvas.drawRRect(RRect.fromLTRBR(s.width*0.5, s.height*0.62,
-      s.width*0.72, s.height*1.0, const Radius.circular(10)), gp);
+// ═══════════════════════════════════════════════════════════════════════════
+//  HUD OVERLAY
+// ═══════════════════════════════════════════════════════════════════════════
+class _HudComponent extends Component with HasGameRef<PC2Game> {
+  _HudComponent({required PC2Game game}) : super(priority: 300);
+
+  @override
+  void render(Canvas canvas) {
+    final g = gameRef;
+    final sz = g.size;
+    final cap = g.captain;
+
+    // ── Hull bar ────────────────────────────────────────────────────────
+    _drawBar(canvas, label: 'HULL',
+      x: 14, y: 48, w: 110, h: 6,
+      value: g.hull,
+      color: g.hull > 0.5 ? cIce : g.hull > 0.25 ? cGold : cRed);
+
+    // ── Ability bar ─────────────────────────────────────────────────────
+    _drawBarRight(canvas, label: cap.ability,
+      x: sz.x - 14, y: 48, w: 90, h: 5,
+      value: g.abilityCharge,
+      color: g.abilityActive ? Colors.white : cap.color);
+
+    // ── Stage label ─────────────────────────────────────────────────────
+    _drawText(canvas, 'STAGE 1 · TECHO DE NAVE ALIENÍGENA',
+      sz.x / 2, 54, 9, Colors.white.withOpacity(0.28),
+      center: true);
+
+    // ── Score ───────────────────────────────────────────────────────────
+    _drawText(canvas,
+      'SCORE ${g.score.toString().padLeft(6, '0')}',
+      14, sz.y * 0.68, 11, Colors.white54);
+
+    // ── Bajas ───────────────────────────────────────────────────────────
+    if (!g.bossSpawned) {
+      _drawText(canvas, 'BAJAS: ${g.killed}/20',
+        sz.x - 14, sz.y * 0.68, 10, cap.color.withOpacity(0.65),
+        right: true);
+    }
+
+    // ── Boss HP bar ─────────────────────────────────────────────────────
+    if (g.bossSpawned && !g.bossDead) {
+      final boss = g.children.whereType<_BossComp>().firstOrNull;
+      if (boss != null) {
+        _drawText(canvas, '⚠ COMANDANTE ALIENÍGENA',
+          sz.x / 2, 88, 9, cRed, center: true);
+        _drawBarCenter(canvas, x: sz.x/2, y: 100, w: sz.x - 80, h: 7,
+          value: (boss.hp / 50).clamp(0, 1), color: cRed);
+      }
+    }
+
+    // ── Boss muerto ─────────────────────────────────────────────────────
+    if (g.bossDead) {
+      _drawText(canvas, 'SECTOR LIMPIO',
+        sz.x / 2, sz.y * 0.4, 26, cap.color, center: true);
+      _drawText(canvas, 'DESCENDIENDO A LA NAVE...',
+        sz.x / 2, sz.y * 0.4 + 36, 13, Colors.white54, center: true);
+    }
+
+    // ── Casco crítico ────────────────────────────────────────────────────
+    if (g.hull < 0.15) {
+      _drawText(canvas, '⚠ CASCO CRÍTICO ⚠',
+        sz.x / 2, sz.y * 0.38, 15, cRed, center: true);
+    }
+
+    // ── Botón habilidad (visual) ─────────────────────────────────────────
+    final btnX = sz.x - 46.0;
+    final btnY = sz.y * 0.67;
+    final btnPaint = Paint()
+      ..color = (g.abilityCharge >= 1.0
+        ? cap.color.withOpacity(0.22)
+        : Colors.black54);
+    canvas.drawCircle(Offset(btnX, btnY), 30, btnPaint);
+    canvas.drawCircle(Offset(btnX, btnY), 30,
+      Paint()..color = g.abilityActive ? Colors.white :
+        g.abilityCharge >= 1.0 ? cap.color : Colors.white24
+        ..style = PaintingStyle.stroke..strokeWidth = 2);
+
+    // ── Pause button (visual) ─────────────────────────────────────────
+    canvas.drawCircle(Offset(sz.x - 62, 54), 17,
+      Paint()..color = Colors.black45);
+    canvas.drawCircle(Offset(sz.x - 62, 54), 17,
+      Paint()..color = Colors.white24
+        ..style = PaintingStyle.stroke..strokeWidth = 1);
   }
-  @override bool shouldRepaint(_) => false;
+
+  void _drawBar(Canvas c, {required String label, required double x,
+    required double y, required double w, required double h,
+    required double value, required Color color}) {
+    final tp = TextPainter(
+      text: TextSpan(text: label,
+        style: TextStyle(color: color.withOpacity(0.7), fontSize: 8,
+          fontFamily: 'monospace',
+          shadows: const [Shadow(color: Colors.black, blurRadius: 4)])),
+      textDirection: TextDirection.ltr)..layout();
+    tp.paint(c, Offset(x, y - 12));
+    c.drawRRect(RRect.fromLTRBR(x, y, x+w, y+h, const Radius.circular(3)),
+      Paint()..color = Colors.black38);
+    c.drawRRect(RRect.fromLTRBR(x, y, x+w*value.clamp(0,1), y+h,
+      const Radius.circular(3)), Paint()..color = color);
+  }
+
+  void _drawBarRight(Canvas c, {required String label, required double x,
+    required double y, required double w, required double h,
+    required double value, required Color color}) {
+    final tp = TextPainter(
+      text: TextSpan(text: label,
+        style: TextStyle(color: color, fontSize: 8, fontFamily: 'monospace',
+          shadows: const [Shadow(color: Colors.black, blurRadius: 4)])),
+      textDirection: TextDirection.ltr)..layout();
+    tp.paint(c, Offset(x - tp.width, y - 12));
+    c.drawRRect(RRect.fromLTRBR(x-w, y, x, y+h, const Radius.circular(2)),
+      Paint()..color = Colors.black38);
+    c.drawRRect(RRect.fromLTRBR(x-w, y, x-w+w*value.clamp(0,1), y+h,
+      const Radius.circular(2)), Paint()..color = color);
+  }
+
+  void _drawBarCenter(Canvas c, {required double x, required double y,
+    required double w, required double h, required double value,
+    required Color color}) {
+    c.drawRRect(RRect.fromLTRBR(x-w/2, y, x+w/2, y+h,
+      const Radius.circular(3)), Paint()..color = Colors.black38);
+    c.drawRRect(RRect.fromLTRBR(x-w/2, y, x-w/2+w*value, y+h,
+      const Radius.circular(3)), Paint()..color = color);
+  }
+
+  void _drawText(Canvas c, String text, double x, double y, double size,
+    Color color, {bool center = false, bool right = false}) {
+    final tp = TextPainter(
+      text: TextSpan(text: text,
+        style: TextStyle(color: color, fontSize: size,
+          fontFamily: 'monospace', fontWeight: FontWeight.bold,
+          shadows: const [Shadow(color: Colors.black, blurRadius: 5)])),
+      textDirection: TextDirection.ltr)..layout();
+    double dx = x;
+    if (center) dx = x - tp.width / 2;
+    if (right) dx = x - tp.width;
+    tp.paint(c, Offset(dx, y));
+  }
 }
